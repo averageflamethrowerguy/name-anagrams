@@ -71,7 +71,7 @@ public class FrequencyMap {
      * @return                  the copied FrequencyMap
      */
     public FrequencyMap copy() {
-        return new FrequencyMap(backingMap, size);
+        return new FrequencyMap(new HashMap<>(backingMap), size);
     }
 
     public boolean contains(Character character) {
@@ -80,5 +80,10 @@ public class FrequencyMap {
 
     public int size() {
         return size;
+    }
+
+    @Override
+    public String toString() {
+        return "{size: " + size + ", map: " + backingMap.toString() + "}";
     }
 }

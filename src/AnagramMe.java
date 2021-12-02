@@ -4,12 +4,10 @@ import java.io.IOException;
 import java.util.*;
 
 public class AnagramMe {
-    String name;
     String dictPath;
     List<String> dict = new ArrayList<>();
 
-    public AnagramMe(String name, String dictPath) {
-        this.name = name;
+    public AnagramMe(String dictPath) {
         this.dictPath = dictPath;
         try {
             loadDict();
@@ -39,9 +37,11 @@ public class AnagramMe {
                 return 0;
             }
             else {
-                return (s1.length() >= s2.length()) ? 1 : -1;
+                return (s1.length() >= s2.length()) ? -1 : 1;
             }
         });
+
+        reader.close();
     }
 
     /**
@@ -54,8 +54,11 @@ public class AnagramMe {
         FrequencyMap frequencyMap = new FrequencyMap();
 
         // iterates over characters
-        for (Character character : name.toCharArray()) {
-            frequencyMap.increment(character);
+        for (Character character : name.toLowerCase().toCharArray()) {
+            // trims out whitespace
+            if (character != ' ') {
+                frequencyMap.increment(character);
+            }
         }
 
         return frequencyMap;
@@ -76,14 +79,18 @@ public class AnagramMe {
             clonedFreqs = frequencyMap.copy();
 
             if (word.length() <= clonedFreqs.size()) {
+                Boolean didFail = false;
                 for (Character character : word.toCharArray()) {
                     if (clonedFreqs.contains(character)) {
                         clonedFreqs.decrement(character);
                     }
                     else {
                         // breaks the inner loop and continues to the next word
+                        didFail = true;
                         break;
                     }
+                }
+                if (!didFail) {
                     // if we get here, we can add to the new dict
                     filteredDict.add(word);
                 }
@@ -103,7 +110,7 @@ public class AnagramMe {
         List<List<String>> anagrams = new ArrayList<>();
         FrequencyMap frequencyMap = generateFrequencyMap(name);
 
-        anagramHelper(dict, frequencyMap, new ArrayList<>(), anagrams, -1);
+        anagramHelper(dict, frequencyMap, new ArrayList<>(), anagrams, 0);
 
         return anagrams;
     }
@@ -135,10 +142,11 @@ public class AnagramMe {
                 continue;
             }
 
-            List<String> newUsedWords = new ArrayList(usedWords);
+            List<String> newUsedWords = new ArrayList<>(usedWords);
+            newUsedWords.add(word);
+
             // if lengths match, we can submit an anagram
             if (word.length() == frequencyMap.size()) {
-                newUsedWords.add(word);
                 anagrams.add(newUsedWords);
             }
 
@@ -156,6 +164,20 @@ public class AnagramMe {
     }
 
     public static void main(String[] args) {
-
+        AnagramMe anagrammer = new AnagramMe("./words.txt");
+        List<List<String>> anagrams = anagrammer.findAnagrams("Elliot Bayes Potter");
+        anagrams.sort((anagram1, anagram2) -> {
+            if (anagram1.size() == anagram2.size()) {
+                return 0;
+            } else if (anagram1.size() < anagram2.size()) {
+                return -1;
+            } else {
+                return 1;
+            }
+        });
+        System.out.println(anagrams.get(0).size());
+        System.out.println(anagrams.get(anagrams.size()-1).size());
+        System.out.println("Length: " + anagrams.size());
+        System.out.println(anagrams.subList(0, 2000));
     }
 }
