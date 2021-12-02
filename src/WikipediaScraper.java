@@ -12,30 +12,24 @@ import java.util.*;
  * This class scrapes Urban Dictionary to find a frequency table of words
  * the idea is that frequency on Urban Dictionary should somehow correlate with funniness.
  */
-public class UrbanDictionaryScraper {
+public class WikipediaScraper {
     /**
      * The master function to scrape Urban Dictionary
      *
      * @param startingUrl                           the URL to begin from
      * @param numberWordsToCollect                  the number of unique words we want to collect
      */
-    public static void scrapeUrbanDictionary(String startingUrl, Integer numberWordsToCollect, String saveLocation) {
-        Queue<String> urlQueue = new LinkedList<>();
+    public static void scrapeWikipedia(String startingUrl, Integer numberWordsToCollect, String saveLocation) {
         Map<String, Integer> frequencyMap = new HashMap<>();
-        Set<String> travelledUrls = new HashSet<>();
-
-        urlQueue.add(startingUrl);
 
         // iterates through the queue, finding more links and words
-        while (!urlQueue.isEmpty() && (frequencyMap.size() < numberWordsToCollect)) {
-            String nextUrl = urlQueue.remove();
+        while (frequencyMap.size() < numberWordsToCollect) {
             try {
-                parsePage(nextUrl, frequencyMap, urlQueue, travelledUrls);
+                parsePage(startingUrl, frequencyMap);
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
-            System.out.println(nextUrl);
             System.out.println("Map Size: " + frequencyMap.size());
         }
 
@@ -95,45 +89,27 @@ public class UrbanDictionaryScraper {
      *
      * @param url                           the url to retrieve
      * @param frequencyMap                  the freq map to add to
-     * @param urlQueue                      the queue of the next URLs to visit
-     * @param travelledUrls                 the urls we've already visited
      */
     public static void parsePage(
             String url,
-            Map<String, Integer> frequencyMap,
-            Queue<String> urlQueue,
-            Set<String> travelledUrls
+            Map<String, Integer> frequencyMap
     ) throws IOException {
         Document doc = Jsoup.connect(url).get();
-
-        Elements links = doc.select("a[href]");
-        for (Element link : links) {
-            // makes sure it is not an external link, or has been visited previously
-            String linkUrl = link.attr("abs:href");
-            if (linkUrl.contains("https://www.urbandictionary.com/define.php") && !travelledUrls.contains(linkUrl)) {
-                travelledUrls.add(linkUrl);
-                urlQueue.add(linkUrl);
-            }
-        }
-
         // meaning and examples are the classNames for the target divs in the page
-        Elements meanings = doc.select(".meaning");
-        Elements examples = doc.select(".example");
-        for (Elements contents : new ArrayList<Elements>(){{ add(meanings); add(examples); }} ) {
-            for (Element content : contents) {
-                // iterate over words, add if compatible
-                for (String word : content.text().split(" ")) {
-                    addWordIfCompatible(word, frequencyMap);
-                }
+        Elements contents = doc.select("p");
+        for (Element content : contents) {
+            // iterate over words, add if compatible
+            for (String word : content.text().split(" ")) {
+                addWordIfCompatible(word, frequencyMap);
             }
         }
     }
 
     public static void main(String[] args) {
-        scrapeUrbanDictionary(
-                "https://www.urbandictionary.com/",
+        scrapeWikipedia(
+                "https://en.wikipedia.org/wiki/Special:Random",
                 50000,
-                "./urban-words.txt"
+                "./wikipedia-words.txt"
         );
     }
 }
