@@ -145,7 +145,7 @@ public class UrbanDictionaryScraper {
     public static void main(String[] args) {
         scrapeUrbanDictionary(
                 "https://www.urbandictionary.com/",
-                1000,
+                50000,
                 "./urban-words.txt"
         );
     }
