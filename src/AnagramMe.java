@@ -7,6 +7,7 @@ public class AnagramMe {
     String dictPath;
     List<FrequencyContainer> dict = new ArrayList<>();
     private int wordLengthThreshold = 3;
+    private static int penaltySize = 2;
 
     public AnagramMe(String dictPath) {
         this.dictPath = dictPath;
@@ -18,19 +19,6 @@ public class AnagramMe {
     }
 
     /**
-     * Computes the score based on the frequency and score of the word
-     *
-     * @param frequency             the number of times we've found this word
-     * @param word                  the length of the word
-     * @return                      the score of the word
-     */
-    private int computeScore(Integer frequency, String word) {
-        Integer wordLength = word.length();
-        // we try to give a bonus by cube of word length
-        return frequency * wordLength * wordLength * wordLength;
-    }
-
-    /**
      * Loads the dictionary into an ArrayList
      * @throws IOException
      */
@@ -39,13 +27,13 @@ public class AnagramMe {
         String nextLine;
 
         int numberCollected = 0;
-        while ((nextLine = reader.readLine()) != null && numberCollected < 4000) {
+        while ((nextLine = reader.readLine()) != null && numberCollected < 10000) {
             numberCollected++;
             String[] splitLine = nextLine.split(":");
             if (splitLine.length > 1 && splitLine[0].length() >= wordLengthThreshold) {
                 dict.add(
                         new FrequencyContainer(
-                                computeScore(Integer.parseInt(splitLine[1]), splitLine[0]),
+                                Integer.parseInt(splitLine[1]),
                                 splitLine[0]
                         )
                 );
@@ -188,14 +176,31 @@ public class AnagramMe {
         }
     }
 
+    /**
+     * Applies a penalty based on the number of words in the anagram
+     * Note: 1* is the amount to get the average score over words.
+     *
+     * @param anagrams
+     * @return
+     */
+    public static int applySizePenalty(List<FrequencyContainer> anagrams) {
+        int penaltySize1 = AnagramMe.penaltySize;
+        int penalty = 1;
+        while (penaltySize1 > 0) {
+            penalty *= anagrams.size();
+            penaltySize1--;
+        }
+        return penalty;
+    }
+
     public static void main(String[] args) {
-        AnagramMe anagrammer = new AnagramMe("./urban-words.txt");
+        AnagramMe anagrammer = new AnagramMe("./log-words.txt");
         List<List<FrequencyContainer>> anagrams = anagrammer.findAnagrams("Elliot Bayes Potter");
         System.out.println("Sorting the anagrams...");
         // sort in descending order based on score.
         anagrams.sort((anagram1, anagram2) -> {
-            int score1 = FrequencyContainer.getFrequencySum(anagram1);
-            int score2 = FrequencyContainer.getFrequencySum(anagram2);
+            int score1 = FrequencyContainer.getFrequencySum(anagram1) / applySizePenalty(anagram1);
+            int score2 = FrequencyContainer.getFrequencySum(anagram2) / applySizePenalty(anagram2);
 
             if (score1 == score2) {
                 return 0;
